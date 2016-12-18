@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import csv
 import re
@@ -75,4 +75,3 @@ if __name__ == "__main__":
             print '{:>13} {:>10} {:>8}'.format(balance.get('lastFour'), balance.get('availableBalance'), balance.get('initialBalance'))
 
     f.close()
-    
