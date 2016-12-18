@@ -1,0 +1,3 @@
+Card Number,Month,Year,CVV,Zip Code,Note
+4551722007609849,08,25,251,,Zip code is not required if the card is not registered
+4551722003898800,08,25,158,00000,Must have a zip code if the card is registered
