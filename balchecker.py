@@ -10,20 +10,19 @@ def getBalance(cardInfo):
     url1 = 'https://mygift.giftcardmall.com/Card/Login?returnUrl=Transactions'
     url2 = 'https://mygift.giftcardmall.com/Card/Transactions'
     headers = {'Referer': url1}
-    pattern = '<h6>[a-zA-Z ]*</h6><h5>.*</h5></td>'
     response = requests.post(url1, data=cardInfo, allow_redirects=False)
     cookies = response.cookies
     response = requests.get(url2, headers=headers, cookies=cookies, allow_redirects=False)
 
-    match = re.findall(r"\<h6\>([a-zA-Z ]+)</h6><h5>(.+)</h5></td>", response.text)
+    match = re.findall(r"<h6\>([a-zA-Z ]+)</h6><h5>(.+)</h5></td>", response.text)
 
     if len(match) == 3:
         lastFour = match[0][1]
         availableBalance = match[1][1]
         initialBalance = match[2][1]
-        return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance }
+        return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance}
 
-    return {'lastFour': '-1', 'availableBalance': '0', 'initialBalance': '0' }
+    return {'lastFour': '-1', 'availableBalance': '0', 'initialBalance': '0'}
 
 def validateCard(row):
     cardNumber = row[0]
