@@ -20,9 +20,11 @@ def getBalance(cardInfo):
         lastFour = match[0][1]
         availableBalance = match[1][1]
         initialBalance = match[2][1]
-        return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance}
+        cashbackMatch = re.findall(r"INTELISPEND - EGIFT.+\"textRightAlign\">\$([\d.]+)", response.text)
+        cashback = reduce(lambda x, y: x+float(y), cashbackMatch, 0.0) if len(cashbackMatch) > 0 else 0.0
+        return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': "${0:.2f}".format(cashback)}
 
-    return {'lastFour': '-1', 'availableBalance': '0', 'initialBalance': '0'}
+    return {'lastFour': '-1', 'availableBalance': '0', 'initialBalance': '0', 'cashback': '0'}
 
 def validateCard(row):
     cardNumber = row[0]
@@ -60,8 +62,8 @@ if __name__ == "__main__":
     # execute only if run as a script
     f = open(fileName, 'r')
 
-    print '{:>13} {:>10} {:>8}'.format('Last 4 Digits', 'Available', 'Initial')
-    print '================================='
+    print '{:>13} {:>10} {:>8} {:>9}'.format('Last 4 Digits', 'Available', 'Initial', 'Cashback')
+    print '==========================================='
 
     for row in csv.reader(f):
         cardInfo = validateCard(row)
@@ -72,6 +74,6 @@ if __name__ == "__main__":
         if balance.get('lastFour') == '-1':
             print '{:>13} {:>19}'.format(cardInfo.get('CardNumber')[-4:], 'Card not found')
         else:
-            print '{:>13} {:>10} {:>8}'.format(balance.get('lastFour'), balance.get('availableBalance'), balance.get('initialBalance'))
+            print '{:>13} {:>10} {:>8} {:>9}'.format(balance.get('lastFour'), balance.get('availableBalance'), balance.get('initialBalance'), balance.get('cashback'))
 
     f.close()
