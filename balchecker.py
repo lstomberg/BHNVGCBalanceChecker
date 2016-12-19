@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
         balance = getBalance(cardInfo)
         if balance.get('lastFour') == '-1':
-            print '{:>13} {:>19}'.format(cardInfo.get('CardNumber')[-4:], 'Card not found')
+            print '{:>13} {:>29}'.format(cardInfo.get('CardNumber')[-4:], 'Card not found')
         else:
             print '{:>13} {:>10} {:>8} {:>9}'.format(balance.get('lastFour'), balance.get('availableBalance'), balance.get('initialBalance'), balance.get('cashback'))
 
