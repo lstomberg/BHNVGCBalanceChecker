@@ -24,17 +24,23 @@ $ sudo pip install -r requirements.txt
 To make your life easier, homebrew python is recommended. See detail [here](http://docs.python-guide.org/en/latest/starting/install/osx/#install-osx).
 
 1. Install homebrew. Skip this if your already have it.
- ```
- $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
- ```
+
+   ```
+   $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+   ```
+   
 2. Install python 2.7 from homebrew.
- ```
- $ brew install python
- ```
+
+   ```
+   $ brew install python
+   ```
+   
 3. Install requests library. 
- ```
- $ sudo pip install -r requirements.txt
- ```
+
+   ```
+   $ sudo pip install -r requirements.txt
+   ```
+   
 4. Restart the terminal to clear python cache.
 
 
