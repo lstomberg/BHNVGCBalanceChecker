@@ -22,7 +22,7 @@ def getBalance(cardInfo):
         initialBalance = match[2][1]
         cashbackMatch = re.findall(r"INTELISPEND - EGIFT.+\"textRightAlign\">\$([\d.]+)", response.text)
         cashback = reduce(lambda x, y: x+float(y), cashbackMatch, 0.0) if len(cashbackMatch) > 0 else 0.0
-        csrOverrideMatch = re.findall(r"<td>\s*<\/td><td Class=\"textRightAlign\">\$([\d.]+)", response.text)
+        csrOverrideMatch = re.findall(r"<td>&nbsp;<\/td><td Class=\"textRightAlign\">\$([\d.]+)", response.text)
         csrOverride = reduce(lambda x, y: x+float(y), csrOverrideMatch, 0.0) if len(csrOverrideMatch) > 0 else 0.0
         return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': "${0:.2f}".format(cashback), 'csrOverride': "${0:.2f}".format(csrOverride)}
 
