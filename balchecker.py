@@ -1,34 +1,34 @@
 #!/usr/bin/env python
 
 import csv
-import re
 import requests
+
+from utils import cards
 
 fileName = 'cards.csv'
 
 def getBalance(cardInfo):
-    url1 = 'https://mygift.giftcardmall.com/Card/Login?returnUrl=Transactions'
-    url2 = 'https://mygift.giftcardmall.com/Card/Transactions'
-    headers = {'Referer': url1}
+    url1 = 'https://mygift.giftcardmall.com/Card/_Login?returnUrl=Transactions'
+    url2 = 'https://mygift.giftcardmall.com/Card/_CardTransactions'
+    headers = {'X-Requested-With': 'XMLHttpRequest', 'Referer': 'https://mygift.giftcardmall.com/'}
+    cardInfo['X-Requested-With'] = 'XMLHttpRequest'
+
     response = requests.post(url1, data=cardInfo, allow_redirects=False)
     cookies = response.cookies
-    response = requests.get(url2, headers=headers, cookies=cookies, allow_redirects=False)
+    response = requests.get(url2, headers=headers, cookies=cookies)
 
-    match = re.findall(r"<h6\>([a-zA-Z ]+)</h6><h5>(.+)</h5></td>", response.text)
+    lastFour = cards.VisaGiftCard.parseLastFour(response.text)
+    availableBalance = cards.VisaGiftCard.parseCurrBalance(response.text)
+    initialBalance = cards.VisaGiftCard.parseInitBalance(response.text)
+    cashback = cards.VisaGiftCard.parseFiveBackAmount(response.text)
+    override = cards.VisaGiftCard.parseOverrideAmount(response.text)
 
-    if len(match) == 3:
-        lastFour = match[0][1]
-        availableBalance = match[1][1]
-        initialBalance = match[2][1]
-        cashbackMatch = re.findall(r"INTELISPEND - EGIFT.+\"textRightAlign\">\$([\d.]+)", response.text)
-        cashback = reduce(lambda x, y: x+float(y), cashbackMatch, 0.0) if len(cashbackMatch) > 0 else 0.0
-        csrOverrideMatch = re.findall(r"<td>&nbsp;<\/td><td Class=\"textRightAlign\">\$([\d.]+)", response.text)
-        csrOverride = reduce(lambda x, y: x+float(y), csrOverrideMatch, 0.0) if len(csrOverrideMatch) > 0 else 0.0
-        return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': "${0:.2f}".format(cashback), 'csrOverride': "${0:.2f}".format(csrOverride)}
-
-    return {'lastFour': '-1', 'availableBalance': '0', 'initialBalance': '0', 'cashback': '0'}
+    return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': cashback, 'csrOverride': override}
 
 def validateCard(row):
+    if len(row) != 6:
+        return None
+
     cardNumber = row[0]
     month = row[1]
     year = row[2]
@@ -58,7 +58,7 @@ def validateCard(row):
     if postal == '':
         postal = '00000'
 
-    return {'CardNumber': cardNumber, 'ExpirationMonth': month, 'ExpirationYear': year, 'SecurityCode': cvv2, 'PostalCode': postal, 'Note': note}
+    return {'CardNumber': cardNumber, 'ExpirationMonth': month, 'ExpirationYear': year, 'SecurityCode': cvv2}
 
 if __name__ == "__main__":
     # execute only if run as a script
