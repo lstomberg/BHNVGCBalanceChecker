@@ -51,10 +51,7 @@ class VisaGiftCard:
         if len(match) == 1:
             return match[0]
 
-        if len(match) > 1:
-            return 'Error'
-
-        return 'N/A'
+        return 'Error'
 
     @staticmethod
     def parseInitBalance(msg):
@@ -77,10 +74,7 @@ class VisaGiftCard:
         if len(match) == 1:
             return match[0]
 
-        if len(match) > 1:
-            return 'Error'
-
-        return 'N/A'
+        return 'Error'
 
     @staticmethod
     def parseCurrBalance(msg):
@@ -103,14 +97,14 @@ class VisaGiftCard:
         if len(match) == 1:
             return match[0]
 
-        if len(match) > 1:
-            return 'Error'
-
-        return 'N/A'
+        return 'Error'
 
     @staticmethod
     def parseFiveBackAmount(msg):
         """Given the response message, extract the five back amount on the card.
+
+        There could be multiple transactions so we should iterate all of them and
+        sum up the amounts.
 
         Example message:
             ...
@@ -128,20 +122,24 @@ class VisaGiftCard:
                    "<div class=\"col-xs-5ths transaction-amount\">[\s]*"
                    "\$(\d+.\d\d)[\s]*"
                    "</div>")
-        match = re.findall(pattern, msg)
+        matches = re.findall(pattern, msg)
 
-        if len(match) == 1:
-            return match[0]
+        if len(matches) == 0:
+            return 'N/A'
 
-        if len(match) > 1:
-            return 'Error'
+        cashback = 0
+        for match in matches:
+            cashback += float(match)
 
-        return 'N/A'
+        return '{0:.2f}'.format(cashback)
 
     @staticmethod
     def parseOverrideAmount(msg):
         """Given the response message, extract the override amount, the amount
         that overrides by customer service, on the card.
+
+        There could be multiple transactions so we should iterate all of them and
+        sum up the amounts.
 
         Example message:
             ...
@@ -158,12 +156,13 @@ class VisaGiftCard:
                    "<div class=\"col-xs-5ths transaction-amount\">[\s]*"
                    "\$(\d+.\d\d)[\s]*"
                    "</div>")
-        match = re.findall(pattern, msg)
+        matches = re.findall(pattern, msg)
 
-        if len(match) == 1:
-            return match[0]
+        if len(matches) == 0:
+            return 'N/A'
 
-        if len(match) > 1:
-            return 'Error'
+        override = 0
+        for match in matches:
+            override += float(match)
 
-        return "N/A"
+        return '{0:.2f}'.format(override)
