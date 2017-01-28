@@ -26,6 +26,9 @@ def getBalance(cardInfo):
     return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': cashback, 'csrOverride': override}
 
 def validateCard(row):
+    if len(row) != 6:
+        return None
+
     cardNumber = row[0]
     month = row[1]
     year = row[2]
