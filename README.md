@@ -28,21 +28,20 @@ To make your life easier, homebrew python is recommended. See detail [here](http
    ```
    $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
    ```
-   
+
 2. Install python 2.7 from homebrew.
 
    ```
    $ brew install python
    ```
-   
-3. Install requests library. 
+
+3. Install requests library.
 
    ```
    $ sudo pip install -r requirements.txt
    ```
-   
-4. Restart the terminal to clear python cache.
 
+4. Restart the terminal to clear python cache.
 
 ## Card Information
 Card information is stored in CSV format in `cards.csv` file with only one card in each line, `Card Number`, `Month`, `Year` , `CVV`, `Zip Code`, and `Note` are separated with commas. Edit `cards.csv` to import your cards. If you have registered your card, you need to provide the zip code; otherwise you can leave it blank.
