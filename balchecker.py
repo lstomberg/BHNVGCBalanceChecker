@@ -51,7 +51,7 @@ def validateCard(row):
         print 'Error: card number {} has invalid year {}.'.format(cardNumber, year)
         return None
     if not (int(cvv2) > -1 and int(cvv2) < 1000):
-        print 'Error: card number {} has invalid CVV {}.'.format(cardNumber, cvv)
+        print 'Error: card number {} has invalid CVV {}.'.format(cardNumber, cvv2)
         return None
     if len(month) == 1:
         month = '0' + month
@@ -73,8 +73,8 @@ if __name__ == "__main__":
             continue
 
         balance = getBalance(cardInfo)
-        if balance.get('lastFour') == '-1':
-            print '{:>6} {:>29}'.format(cardInfo.get('CardNumber')[-4:], 'Card not found')
+        if balance.get('lastFour') == 'Error':
+            print '{:>6} {:>39}'.format(cardInfo.get('CardNumber')[-4:], 'Card not found')
         else:
             print '{:>6} {:>10} {:>8} {:>9} {:>9}'.format(balance.get('lastFour'), balance.get('availableBalance'), balance.get('initialBalance'), balance.get('cashback'), balance.get('csrOverride'))
 
