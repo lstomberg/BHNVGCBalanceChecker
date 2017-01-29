@@ -3,7 +3,7 @@
 import csv
 import requests
 
-from utils import cards
+from utils import VisaGiftCard
 
 fileName = 'cards.csv'
 
@@ -17,11 +17,11 @@ def getBalance(cardInfo):
     cookies = response.cookies
     response = requests.get(url2, headers=headers, cookies=cookies)
 
-    lastFour = cards.VisaGiftCard.parseLastFour(response.text)
-    availableBalance = cards.VisaGiftCard.parseCurrBalance(response.text)
-    initialBalance = cards.VisaGiftCard.parseInitBalance(response.text)
-    cashback = cards.VisaGiftCard.parseFiveBackAmount(response.text)
-    override = cards.VisaGiftCard.parseOverrideAmount(response.text)
+    lastFour = VisaGiftCard.parseLastFour(response.text)
+    availableBalance = VisaGiftCard.parseCurrBalance(response.text)
+    initialBalance = VisaGiftCard.parseInitBalance(response.text)
+    cashback = VisaGiftCard.parseFiveBackAmount(response.text)
+    override = VisaGiftCard.parseOverrideAmount(response.text)
 
     return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': cashback, 'csrOverride': override}
 
