@@ -44,7 +44,12 @@ To make your life easier, homebrew python is recommended. See detail [here](http
 4. Restart the terminal to clear python cache.
 
 ## Card Information
-Card information is stored in CSV format in `cards.csv` file with only one card in each line, `Card Number`, `Month`, `Year` , `CVV`, `Zip Code`, and `Note` are separated with commas. Edit `cards.csv` to import your cards. If you have registered your card, you need to provide the zip code; otherwise you can leave it blank.
+Card information should be stored in CSV format in `cards.csv` file with only one card in each line, `Card Number`, `Month`, `Year` , `CVV`, `Zip Code`, and `Note` are separated with commas. 
+Run the following command to copy `cards.csv` from `cards.sample.csv`.
+```
+$ cp cards.sample.csv cards.csv
+```
+Edit `cards.csv` to import your cards. If you have registered your card, you need to provide the zip code; otherwise you can leave it blank.
 
 ## Check Card Balance
 Use the following command to run the script:
