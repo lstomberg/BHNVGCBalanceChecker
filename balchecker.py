@@ -6,6 +6,7 @@ import requests
 from utils import VisaGiftCard
 
 fileName = 'cards.csv'
+sampleFileName = 'cards.sample.csv'
 
 def getBalance(cardInfo):
     url1 = 'https://mygift.giftcardmall.com/Card/_Login?returnUrl=Transactions'
@@ -62,7 +63,11 @@ def validateCard(row):
 
 if __name__ == "__main__":
     # execute only if run as a script
-    f = open(fileName, 'r')
+    try:
+        f = open(fileName, 'r')
+    except (OSError, IOError) as error:
+        print '"{}" is not found.\nPlease make a copy from "{}"'.format(fileName, sampleFileName)
+        exit()
 
     print '{:>6} {:>10} {:>8} {:>9} {:>9}'.format('Last 4', 'Available', 'Initial', 'Cashback', 'Override')
     print '=============================================='
