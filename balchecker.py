@@ -30,7 +30,7 @@ if __name__ == "__main__":
         if row[0] == 'Card Number': # CSV Header
             continue
         vgc = newCard(row)
-        vgc.getBalance()
+        vgc.getBalanceAndTransactions()
         formatStr = lambda x: '{:>%i}' % len(x) # Take a string and return right align format '{:>x}' where x is the length of the input
         formatFloat = lambda x: '{:>%i.2f}' % len(x)
         if vgc.valid:

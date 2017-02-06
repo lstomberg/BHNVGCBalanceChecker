@@ -76,8 +76,8 @@ class VisaGiftCard(object):
 
         return True
 
-    def getBalance(self):
-        """Get balace through HTTP request. Return a bool reprecet successul request or not"""
+    def getBalanceAndTransactions(self):
+        """Get balace through HTTP request. Return a bool represent request successful or not"""
         if not self.valid:
             return False
         self.reset()
