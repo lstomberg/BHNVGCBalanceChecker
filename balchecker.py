@@ -1,65 +1,16 @@
 #!/usr/bin/env python
 
 import csv
-import requests
-
 from utils import VisaGiftCard
 
 fileName = 'cards.csv'
 sampleFileName = 'cards.sample.csv'
 
-def getBalance(cardInfo):
-    url1 = 'https://mygift.giftcardmall.com/Card/_Login?returnUrl=Transactions'
-    url2 = 'https://mygift.giftcardmall.com/Card/_CardTransactions'
-    headers = {'X-Requested-With': 'XMLHttpRequest', 'Referer': 'https://mygift.giftcardmall.com/'}
-    cardInfo['X-Requested-With'] = 'XMLHttpRequest'
-
-    response = requests.post(url1, data=cardInfo, allow_redirects=False)
-    cookies = response.cookies
-    response = requests.get(url2, headers=headers, cookies=cookies)
-
-    lastFour = VisaGiftCard.parseLastFour(response.text)
-    availableBalance = VisaGiftCard.parseCurrBalance(response.text)
-    initialBalance = VisaGiftCard.parseInitBalance(response.text)
-    cashback = VisaGiftCard.parseFiveBackAmount(response.text)
-    override = VisaGiftCard.parseOverrideAmount(response.text)
-
-    return {'lastFour': lastFour, 'availableBalance': availableBalance, 'initialBalance': initialBalance, 'cashback': cashback, 'csrOverride': override}
-
-def validateCard(row):
+def newCard(row):
     if len(row) != 6:
         return None
-
-    cardNumber = row[0]
-    month = row[1]
-    year = row[2]
-    cvv2 = row[3]
-    postal = row[4]
-    note = row[5]
-
-    if cardNumber == 'Card Number':
-        return None
-    if not len(cardNumber) == 16:
-        print 'Error: card number {} does not have 16 digits.'.format(cardNumber)
-        return None
-    if not '4' in cardNumber[0]:
-        print 'Error: card number {} is not a VISA gift card.'.format(cardNumber)
-        return None
-    if not (int(month) > 0 and int(month) < 13):
-        print 'Error: card number {} has invalid month {}.'.format(cardNumber, month)
-        return None
-    if not (int(year) > -1 and int(year) < 100):
-        print 'Error: card number {} has invalid year {}.'.format(cardNumber, year)
-        return None
-    if not (int(cvv2) > -1 and int(cvv2) < 1000):
-        print 'Error: card number {} has invalid CVV {}.'.format(cardNumber, cvv2)
-        return None
-    if len(month) == 1:
-        month = '0' + month
-    if postal == '':
-        postal = '00000'
-
-    return {'CardNumber': cardNumber, 'ExpirationMonth': month, 'ExpirationYear': year, 'SecurityCode': cvv2}
+    cardNumber, month, year, cvv, postal, note = row
+    return VisaGiftCard(cardNumber, month, year, cvv, postal)
 
 if __name__ == "__main__":
     # execute only if run as a script
@@ -69,18 +20,24 @@ if __name__ == "__main__":
         print '"{}" is not found.\nPlease make a copy from "{}"'.format(fileName, sampleFileName)
         exit()
 
-    print '{:>6} {:>10} {:>8} {:>9} {:>9}'.format('Last 4', 'Available', 'Initial', 'Cashback', 'Override')
-    print '=============================================='
+    titles = ['Last 4', 'Available', 'Initial', 'Cashback', 'Override']
+    separator = '  '
+    header = separator.join(titles)
+    print header
+    print '=' * len(header)
 
     for row in csv.reader(f):
-        cardInfo = validateCard(row)
-        if cardInfo is None:
+        if row[0] == 'Card Number': # CSV Header
             continue
-
-        balance = getBalance(cardInfo)
-        if balance.get('lastFour') == 'Error':
-            print '{:>6} {:>39}'.format(cardInfo.get('CardNumber')[-4:], 'Card not found')
+        vgc = newCard(row)
+        vgc.getBalance()
+        formatStr = lambda x: '{:>%i}' % len(x) # Take a string and return right align format '{:>x}' where x is the length of the input
+        formatFloat = lambda x: '{:>%i.2f}' % len(x)
+        if vgc.valid:
+            indentFormat = formatStr(titles[0]) + separator + separator.join(map(formatFloat, titles[1:])) # '{:>6}  {:>9}  {:>7}  {:>8}  {:>8}'
+            print indentFormat.format(vgc.lastFour, vgc.availableBalance, vgc.initialBalance, vgc.cashback, vgc.override)
         else:
-            print '{:>6} {:>10} {:>8} {:>9} {:>9}'.format(balance.get('lastFour'), balance.get('availableBalance'), balance.get('initialBalance'), balance.get('cashback'), balance.get('csrOverride'))
+            indentFormat = formatStr(titles[0]) + separator + formatStr(separator.join(titles[1:]))
+            print indentFormat.format(vgc.lastFour, 'ERROR: ' + vgc.errorMessage)
 
     f.close()
