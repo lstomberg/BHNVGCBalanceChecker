@@ -1,168 +1,145 @@
 # Visa Gift Card
 import re
+from transaction import Transaction
+from network import BHNRequest, PageParser
 
-class VisaGiftCard:
-    """A Visa Gift Card
+class VisaGiftCard(object):
+    """Visa Gift Card
 
-    Input arguments:
-    cardNumber -- 16-digits card number
-    expirationMonth -- 2-digit expiration month
-    expirationYear -- 2-digit expiration year
-    cvv -- 3-digit security code
-    postal -- 5-digit zip code
-    initBalance -- initial load value
-    currBalance -- current remaining value
-    transactions -- list of transactions
+    Attributes
+    ----------
+    * cardNumber(str): 16-digits card number
+    * expMonth(str): 2-digit expiration month
+    * expYear(str): 2-digit expiration year
+    * cvv(str): 3-digit security code
+    * postal(str): 5-digit zip code
+    * valid(bool): card is valid or not
+    * errorMessage(str): error message for invalid card
+
+    Read only properties
+    --------------------
+    * lastFour(str)
+    * cardInfo(dict)
+    * initialBalance(float)
+    * availableBalance(float)
+    * cashback(float)
+    * override(float)
 
     """
 
-    def __init__(self, cardNumber, expirationMonth, expirationYear, cvv, **kwargs):
+    def __init__(self, cardNumber, expirationMonth, expirationYear, cvv, postal):
         self.cardNumber = cardNumber
-        self.expirationMonth = expirationMonth
-        self.expirationYear = expirationYear
+        self.expMonth = expirationMonth
+        self.expYear = expirationYear
         self.cvv = cvv
-        self.postal = kwargs.get('postal', '00000');
-        self.initBalance = kwargs.get('initBalance', 0)
-        self.currBalance = kwargs.get('currBalance', 0)
-        self.transactions = kwargs.get('transactions', list());
+        self.postal = postal
+        self.errorMessage = None
+        self.valid = self.validation()
 
-    @staticmethod
-    def parse(msg):
-        """Given the response message, parse it and return a VisaGiftCard object."""
+        self.transactions = []
+        self.reset()
 
-    @staticmethod
-    def parseLastFour(msg):
-        """Given the response message, extract the last four digits of the card.
+    def reset(self):
+        """Reset all attributes getting from network"""
+        self._initialBalance = self._availableBalance = self._cashback = self._override = 0.0
 
-        Example message:
-            ...
-            <div class="data-box">
-                <div class="name">Card Ending</div>
-                <div class="value">7117</div>
-            </div>
-            ...
-        """
-        pattern = ("<div class=\"data-box\">[\s]*"
-                   "<div class=\"name\">Card Ending</div>[\s]*"
-                   "<div class=\"value\">(\d\d\d\d)</div>[\s]*"
-                   "</div>")
-        match = re.findall(pattern, msg)
+    def __str__(self):
+        return 'Card {} {}/{} cvv:{} {}/{}'.format(self.lastFour, self.expMonth, self.expYear, self.cvv, self.availableBalance, self.initialBalance)
 
-        if len(match) == 1:
-            return match[0]
+    def validation(self):
 
-        return 'Error'
+        if not len(self.cardNumber) == 16:
+            self.errorMessage = 'invalid card number'
+            return False
+        if not '4' in self.cardNumber[0]:
+            self.errorMessage = 'not a VISA gift card'
+            return False
 
-    @staticmethod
-    def parseInitBalance(msg):
-        """Given the response message, extract the initial balance of the card.
+        if len(self.expMonth) == 1:
+            self.expMonth = '0' + self.expMonth
+        if not (int(self.expMonth) > 0 and int(self.expMonth) < 13):
+            self.errorMessage = 'invalid month {}'.format(self.expMonth)
+            return False
 
-        Example message:
-            ...
-            <div class="data-box">
-                <div class="name">Available Balance</div>
-                <div class="value">$50.00</div>
-            </div>
-            ...
-        """
-        pattern = ("<div class=\"data-box\">[\s]*"
-                   "<div class=\"name\">Initial Balance</div>[\s]*"
-                   "<div class=\"value\">\$(\d+.\d\d)</div>[\s]*"
-                   "</div>")
-        match = re.findall(pattern, msg)
+        if not (int(self.expYear) > 15 and int(self.expYear) < 100):
+            self.errorMessage = 'invalid year {}'.format(self.expYear)
+            return False
 
-        if len(match) == 1:
-            return match[0]
+        if not (int(self.cvv) > -1 and int(self.cvv) < 1000):
+            self.errorMessage = 'invalid cvv {}'.format(self.cvv)
+            return False
 
-        return 'Error'
+        self.postal = self.postal or '00000'
+        if not len(self.postal) == 5:
+            self.errorMessage = 'invalid postal {}'.format(self.postal)
+            return False
 
-    @staticmethod
-    def parseCurrBalance(msg):
-        """Given the response message, extract the current balance of the card.
+        return True
 
-        Example message:
-            ...
-            <div class="data-box">
-                <div class="name">Available Balance</div>
-                <div class="value">$50.00</div>
-            </div>
-            ...
-        """
-        pattern = ("<div class=\"data-box\">[\s]*"
-                   "<div class=\"name\">Available Balance</div>[\s]*"
-                   "<div class=\"value\">\$(\d+.\d\d)</div>[\s]*"
-                   "</div>")
-        match = re.findall(pattern, msg)
+    def getBalanceAndTransactions(self):
+        """Get balace through HTTP request. Return a bool represent request successful or not"""
+        if not self.valid:
+            return False
+        self.reset()
 
-        if len(match) == 1:
-            return match[0]
+        responseStr = BHNRequest(BHNRequest.TypeBalance, self.cardInfo).send()
+        parser = PageParser()
+        parser.feed(responseStr)
 
-        return 'Error'
+        if parser.initialBalance is None or parser.availableBalance is None:
+            self.valid = False
+            self.errorMessage = 'card not found'
+            return False
 
-    @staticmethod
-    def parseFiveBackAmount(msg):
-        """Given the response message, extract the five back amount on the card.
+        self._initialBalance = parser.initialBalance
+        self._availableBalance = parser.availableBalance
+        self.transactions = parser.transactions
+        for transaction in self.transactions:
+            if transaction.transactionType == Transaction.TypeCashback:
+                self._cashback += transaction.amount
+            elif transaction.transactionType == Transaction.TypeOverride:
+                self._override += transaction.amount
 
-        There could be multiple transactions so we should iterate all of them and
-        sum up the amounts.
+        self.valid = True
+        self.errorMessage = None
+        return True
 
-        Example message:
-            ...
-            <div class="col-xs-5ths transaction-desc">
-                INTELISPEND - EGIFT -
-            </div>
-            <div class="col-xs-5ths transaction-amount">
-                $25.00
-            </div>
-            ...
-        """
-        pattern = ("<div class=\"col-xs-5ths transaction-desc\">[\s]*"
-                   "INTELISPEND - EGIFT[ -]*[\s]*"
-                   "</div>[\s]*"
-                   "<div class=\"col-xs-5ths transaction-amount\">[\s]*"
-                   "\$(\d+.\d\d)[\s]*"
-                   "</div>")
-        matches = re.findall(pattern, msg)
+    # Read only properties
 
-        if len(matches) == 0:
-            return 'N/A'
+    @property
+    def lastFour(self):
+        """Return last four digit of card number."""
+        return self.cardNumber[-4:]
 
-        cashback = 0
-        for match in matches:
-            cashback += float(match)
+    @property
+    def cardInfo(self):
+        """Return JSON dictionary for POST request."""
+        json = {
+            'CardNumber': self.cardNumber,
+            'ExpirationMonth': self.expMonth,
+            'ExpirationYear': self.expYear,
+            'SecurityCode': self.cvv
+            }
+        if self.postal != '00000':
+            json['PostalCode'] = self.postal
+        return json
 
-        return '{0:.2f}'.format(cashback)
+    @property
+    def initialBalance(self):
+        """Return initial card balance"""
+        return self._initialBalance
 
-    @staticmethod
-    def parseOverrideAmount(msg):
-        """Given the response message, extract the override amount, the amount
-        that overrides by customer service, on the card.
+    @property
+    def availableBalance(self):
+        """Return available card balance"""
+        return self._availableBalance
 
-        There could be multiple transactions so we should iterate all of them and
-        sum up the amounts.
+    @property
+    def cashback(self):
+        """Return available card balance"""
+        return self._cashback
 
-        Example message:
-            ...
-            <div class="col-xs-5ths transaction-desc">
-
-            </div>
-            <div class="col-xs-5ths transaction-amount">
-                $25.00
-            </div>
-            ...
-        """
-        pattern = ("<div class=\"col-xs-5ths transaction-desc\">[\s]*"
-                   "</div>[\s]*"
-                   "<div class=\"col-xs-5ths transaction-amount\">[\s]*"
-                   "\$(\d+.\d\d)[\s]*"
-                   "</div>")
-        matches = re.findall(pattern, msg)
-
-        if len(matches) == 0:
-            return 'N/A'
-
-        override = 0
-        for match in matches:
-            override += float(match)
-
-        return '{0:.2f}'.format(override)
+    @property
+    def override(self):
+        """Return available card balance"""
+        return self._override
