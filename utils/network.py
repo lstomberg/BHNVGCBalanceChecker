@@ -1,7 +1,8 @@
 
 from HTMLParser import HTMLParser
-from transaction import Transaction
 import requests
+import re
+from transaction import Transaction
 
 DEBUG = False
 
@@ -19,21 +20,49 @@ class BHNRequest(object):
     HEADER = {'X-Requested-With': 'XMLHttpRequest', 'Referer': DOMAIN}
 
     # Request Type Enum
-    TypeBalance, TypeRegister, TypeSetPin = range(0, 3)
+    TypeBalance, TypeRegistation, TypeSetPin = range(0, 3)
 
     URLS = {
         TypeBalance : 'Card/_Login?returnUrl=Transactions',
-        # TypeRegister : 'Account/_Profile/form-complete-reg?name=complete-reg',
-        # TypeSetPin : 'Card/_SetPin/setpin-form'
+        TypeRegistation: ['Card/_Login?returnUrl=Registration', 'Account/_Profile/form-complete-reg?name=complete-reg'],
+        TypeSetPin : ['Card/_Login?returnUrl=SetPin', 'Card/_SetPin/setpin-form']
     }
 
-    def __init__(self, requestType, data):
-        self.url = BHNRequest.DOMAIN + BHNRequest.URLS[requestType]
-        self.data = data
+    def __init__(self, requestType, cardInfo, contactInfo=None, pin=None):
+        self.requestType = requestType
+        self.cardInfo = cardInfo
+        self.contactInfo = contactInfo
+        self.pinInfo = {
+            'PinCode': pin,
+            'ConfirmPin': pin
+        }
 
     def send(self):
         """Send a POST request and return response.text"""
-        response = requests.post(self.url, headers=BHNRequest.HEADER, data=self.data, verify=not DEBUG)
+        if self.requestType == BHNRequest.TypeBalance:
+            url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType]
+            response = requests.post(url, headers=BHNRequest.HEADER, data=self.cardInfo, verify=not DEBUG)
+        else:
+            url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType][0]
+            session = requests.Session()
+            response = session.post(url, headers=BHNRequest.HEADER, data=self.cardInfo, verify=not DEBUG)
+            if response.url == url:
+                # Redirect to the same url. This means registration failure. Maybe wrong card info or this card is already registered.
+                return ''
+
+            if self.requestType == BHNRequest.TypeRegistation:
+                data = self.contactInfo
+            else:
+                match = re.search(r'<input id="CardID" name="CardID" type="hidden" value="(\d+)" \/>', response.text)
+                if match:
+                    self.pinInfo['CardID'] = match.group(1)
+                    data = self.pinInfo
+                else:
+                    return ''
+
+            url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType][1]
+            response = session.post(url, headers=BHNRequest.HEADER, data=data, verify=not DEBUG)
+
         return response.text
 
 class PageParser(HTMLParser):

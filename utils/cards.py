@@ -1,5 +1,4 @@
 # Visa Gift Card
-import re
 from transaction import Transaction
 from network import BHNRequest, PageParser
 
@@ -38,6 +37,13 @@ class VisaGiftCard(object):
 
         self.transactions = []
         self.reset()
+
+    @classmethod
+    def fromRow(self, row):
+        if len(row) != 6:
+            return None
+        cardNumber, month, year, cvv, postal, note = row
+        return VisaGiftCard(cardNumber, month, year, cvv, postal)
 
     def reset(self):
         """Reset all attributes getting from network"""
@@ -103,6 +109,18 @@ class VisaGiftCard(object):
         self.valid = True
         self.errorMessage = None
         return True
+
+    def registerCard(self, contactInfo):
+        if not self.valid:
+            return False
+        responseStr = BHNRequest(BHNRequest.TypeRegistation, self.cardInfo, contactInfo).send()
+        return 'Your card was successfully registered' in responseStr
+
+    def setPin(self, pinCode):
+        if not self.valid:
+            return False
+        responseStr = BHNRequest(BHNRequest.TypeSetPin, self.cardInfo, None, pinCode).send()
+        return 'Your card PIN has been set!' in responseStr
 
     # Read only properties
 

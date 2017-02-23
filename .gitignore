@@ -1,3 +1,6 @@
 *.pyc
 cards.csv
+registration.csv
+setpin.csv
+config.ini
 .vscode

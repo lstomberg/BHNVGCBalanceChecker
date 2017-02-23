@@ -6,12 +6,6 @@ from utils import VisaGiftCard
 fileName = 'cards.csv'
 sampleFileName = 'cards.sample.csv'
 
-def newCard(row):
-    if len(row) != 6:
-        return None
-    cardNumber, month, year, cvv, postal, note = row
-    return VisaGiftCard(cardNumber, month, year, cvv, postal)
-
 if __name__ == "__main__":
     # execute only if run as a script
     try:
@@ -29,7 +23,7 @@ if __name__ == "__main__":
     for row in csv.reader(f):
         if row[0] == 'Card Number': # CSV Header
             continue
-        vgc = newCard(row)
+        vgc = VisaGiftCard.fromRow(row)
         vgc.getBalanceAndTransactions()
         formatStr = lambda x: '{:>%i}' % len(x) # Take a string and return right align format '{:>x}' where x is the length of the input
         formatFloat = lambda x: '{:>%i.2f}' % len(x)
