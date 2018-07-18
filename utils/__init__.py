@@ -1,1 +1,1 @@
-from cards import VisaGiftCard
+from .cards import VisaGiftCard

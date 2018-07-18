@@ -1,6 +1,6 @@
 # Visa Gift Card
-from transaction import Transaction
-from network import BHNRequest, PageParser
+from .transaction import Transaction
+from .network import BHNRequest, PageParser
 
 class VisaGiftCard(object):
     """Visa Gift Card
@@ -90,6 +90,7 @@ class VisaGiftCard(object):
 
         responseStr = BHNRequest(BHNRequest.TypeBalance, self.cardInfo).send()
         parser = PageParser()
+        print ( responseStr )
         parser.feed(responseStr)
 
         if parser.initialBalance is None or parser.availableBalance is None:

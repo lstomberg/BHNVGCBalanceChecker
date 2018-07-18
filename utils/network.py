@@ -1,8 +1,8 @@
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 import requests
 import re
-from transaction import Transaction
+from .transaction import Transaction
 
 DEBUG = False
 
@@ -42,6 +42,10 @@ class BHNRequest(object):
         if self.requestType == BHNRequest.TypeBalance:
             url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType]
             response = requests.post(url, headers=BHNRequest.HEADER, data=self.cardInfo, verify=not DEBUG)
+            print(url)
+            print(BHNRequest.HEADER)
+            print(self.cardInfo)
+            print(response)
         else:
             url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType][0]
             session = requests.Session()
@@ -83,7 +87,7 @@ class PageParser(HTMLParser):
         self.currentClass = None
         if len(attrs) > 0:
             attrDict = dict(attrs)
-            if attrDict.has_key('class'):
+            if 'class' in attrDict:
                 self.currentClass = attrDict['class']
                 if self.currentClass == 'panel-heading':
                     self.transaction = Transaction()
