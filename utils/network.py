@@ -6,6 +6,7 @@ from .transaction import Transaction
 
 DEBUG = False
 
+
 class BHNRequest(object):
     """BHNRequest
 
@@ -42,10 +43,6 @@ class BHNRequest(object):
         if self.requestType == BHNRequest.TypeBalance:
             url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType]
             response = requests.post(url, headers=BHNRequest.HEADER, data=self.cardInfo, verify=not DEBUG)
-            print(url)
-            print(BHNRequest.HEADER)
-            print(self.cardInfo)
-            print(response)
         else:
             url = BHNRequest.DOMAIN + BHNRequest.URLS[self.requestType][0]
             session = requests.Session()
