@@ -90,7 +90,6 @@ class VisaGiftCard(object):
 
         responseStr = BHNRequest(BHNRequest.TypeBalance, self.cardInfo).send()
         parser = PageParser()
-        print ( responseStr )
         parser.feed(responseStr)
 
         if parser.initialBalance is None or parser.availableBalance is None:
